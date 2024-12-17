@@ -1,0 +1,36 @@
+services:
+  ts-syncthing:
+    image: tailscale/tailscale:v1.78
+    hostname: sonabia-syncthing
+    container_name: ts-syncthing
+    environment:
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_SERVE_CONFIG=/config/config.json
+      - TS_USERSPACE=false
+    volumes:
+      - ts_syncthing_state:/var/lib/tailscale
+      - ${PWD}/tailscale:/config
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+      - sys_module
+    restart: unless-stopped
+
+  syncthing:
+    image: lscr.io/linuxserver/syncthing:1.28.1
+    container_name: syncthing
+    environment:
+      - TZ=Europe/Madrid
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${PWD}/syncthing:/config
+      - /mnt/hdd1/frigate_storage:/mnt/frigate
+    restart: unless-stopped
+    network_mode: service:ts-syncthing
+    depends_on:
+      - ts-syncthing
+
+volumes:
+  ts_syncthing_state:
